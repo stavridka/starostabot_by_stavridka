@@ -1,22 +1,24 @@
 from aiogram import Router, types, F
-from aiogram.types import Message, CallbackQuery
+from aiogram.types import Message, CallbackQuery,FSInputFile
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
 from aiogram.filters import Command
 from aiogram.filters.callback_data import CallbackData
 from config import bot
+from aiogram.types.input_file import FSInputFile
 
+       
+import os        
 import keybs
 import config
 import DB
 from datetime import date,datetime
-from config import MyCallBack
 
 router = Router()
 
-class RegisterMessages(StatesGroup):
-    step1 = State()
-    stap2 = State()
+class Form(StatesGroup):
+    tg_id = State()
+    
 
 
     
@@ -65,6 +67,7 @@ async def start_attendance(msg:Message):
 async def stop_attendance(msg:Message):
     if DB.is_attendance_fin() == True:
         await bot.send_message(config.test_key, f'Отметка посещаемости завершена, {DB.get_quantity()} студентов отмечено!')
+        send_data = DB.create_dict()
         DB.new_day()
     else:
         await msg.answer('Сегодня вы уже заверяли посещаемость!',show_alert=True)
@@ -83,3 +86,34 @@ async def add_new_student(callback:CallbackQuery):
         await callback.answer(f'Вы были добавлены в список группы как {full_name}', show_alert=True)
     else:
         await callback.answer('Это имя/ваш id уже записан в базу данных. Если вы не выбирали свое имя или выбрали чужое имя по ошибке, обратитесь к администратору.', show_alert=True)
+        
+
+@router.callback_query(F.data == "go_to_db")
+async def go_to_db(callback:CallbackQuery):
+    await bot.send_message(callback.from_user.id, 'Здесь можно прикоснуться к БД...', reply_markup=keybs.create_db_rule_kb())
+
+
+@router.callback_query(F.data == "drop_day_code")
+async def drop_day_code(callback:CallbackQuery):
+    DB.drop_day_code()
+    await callback.answer('Код посещения успешно сброшен!', show_alert=True)
+
+
+@router.callback_query(F.data == "create_db_image")
+async def create_db_image(callback:CallbackQuery):
+    DB.create_tab1_image()
+    doc = FSInputFile(config.tab_names[0])
+    await bot.send_document(callback.from_user.id,doc)
+    
+
+@router.callback_query(F.data == "delete_student")
+async def get_stud_id(callback:CallbackQuery, state:FSMContext):
+    await callback.answer('Введите id, который необходимо удалить', show_alert=True)
+    await state.set_state(Form.tg_id)
+    
+
+@router.message(Form.tg_id)
+async def delete_student(msg:Message):
+    DB.delete_student(msg.text)
+    await msg.answer('Запись успешно удалена!', show_alert=True)
+    
