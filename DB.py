@@ -74,9 +74,9 @@ def create_dict():
     sl = dict()
     for el in info:
         if el[1] == 0:
-            sl[el[0]] = 1
-        else:
             sl[el[0]] = 2
+        else:
+            sl[el[0]] = 1
     return sl
     
 
@@ -89,4 +89,3 @@ def new_day():
     db.commit()
 
 create_names_db()
-print(create_dict())
