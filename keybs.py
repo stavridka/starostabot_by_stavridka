@@ -1,6 +1,5 @@
 from aiogram.types import ReplyKeyboardRemove,InlineKeyboardButton,InlineKeyboardMarkup,KeyboardButton,ReplyKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-from config import MyCallBack
 
 import config 
 
@@ -38,7 +37,12 @@ def create_db_rule_kb():
     builder.add(InlineKeyboardButton(
     text = "Сформировать образ БД",
     callback_data = "create_db_image"))     
-
+    builder.add(InlineKeyboardButton(
+    text = "Удалить запись по id",
+    callback_data = "delete_student"))       
+    builder.adjust(1)
+    return builder.as_markup()
+    
 
 def create_names_kb():
     builder = InlineKeyboardBuilder()
