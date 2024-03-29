@@ -1,4 +1,5 @@
 import sqlite3
+import config
 from datetime import date
 
 
@@ -26,6 +27,7 @@ def insert_in_group(tg_id, name, nickname):
 def add_attendance(tg_id):
     info = cursor.execute("SELECT * FROM day_info WHERE date = ?;",(date.today(),))
     if info.fetchone() is None:
+        cursor.execute("UPDATE users SET is_here = ?;",[0])
         cursor.execute("INSERT INTO day_info VALUES (?,?,?);",(date.today(),0,''))
         db.commit()
     if get_student(tg_id)[3] == 0:
@@ -53,17 +55,30 @@ def drop_day_code():
     cursor.execute("UPDATE day_info SET day_code = ? WHERE date = ?;",('',date.today()))
     db.commit()
     
-    
+def delete_student(user_id):
+    cursor.execute("DELETE FROM users WHERE tg_id = ?;", (user_id,))
+    db.commit()
+
+
 def create_tab1_image():
     info = cursor.execute("SELECT * FROM users").fetchall()
-    with open('DB_image.txt','w+') as f:
+    with open(config.tab_names[0],'w+') as f:
         for line in info:
             for el in line:
                 f.write(f'{el} ')
             f.write('\n')
             
     
-    return info
+def create_dict():
+    info = cursor.execute("SELECT name,is_here FROM users;").fetchall()
+    sl = dict()
+    for el in info:
+        if el[1] == 0:
+            sl[el[0]] = 1
+        else:
+            sl[el[0]] = 2
+    return sl
+    
 
 def new_day():
     info = cursor.execute("SELECT is_here FROM users;").fetchall()
@@ -71,8 +86,7 @@ def new_day():
     for el in info:
         day_code += str(el[0])
     cursor.execute("UPDATE day_info SET day_code = ? WHERE date = ?;",(day_code,date.today()))
-    cursor.execute("UPDATE users SET is_here = ?;",[0])
     db.commit()
 
 create_names_db()
-print(create_tab1_image())
+print(create_dict())
